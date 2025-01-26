@@ -299,10 +299,12 @@ static inline header * allocate_object(size_t raw_size) {
     // Checking if unallocated portion is in correct list. If not, it is moved to correct list.
 
     if (get_size(memBlock) <= (N_LISTS - 1) * 8) {
-      memBlock->next->prev = memBlock->prev;
-      memBlock->prev->next = memBlock->next;
-      memBlock->prev = NULL;
-      memBlock->next = NULL;
+      if (memBlock->next) {
+        memBlock->next->prev = memBlock->prev;
+        memBlock->prev->next = memBlock->next;
+        memBlock->prev = NULL;
+        memBlock->next = NULL;
+      }
       size_t sentinel_index = (get_size(memBlock) - ALLOC_HEADER_SIZE - 1) / 8;
       header * sentinel = &freelistSentinels[sentinel_index];
       memBlock->prev = sentinel;
