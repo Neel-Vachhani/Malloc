@@ -66,6 +66,9 @@ static inline void deallocate_object(void * p);
 // Helper functions for allocating a block
 static inline header * allocate_object(size_t raw_size);
 
+//Helper function to allocate and properly add new OS chunk
+static inline header * allocate_os_chunk();
+
 // Helper functions for verifying that the data structures are structurally 
 // valid
 static inline header * detect_cycles();
