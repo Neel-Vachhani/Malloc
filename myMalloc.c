@@ -390,7 +390,14 @@ static inline header * ptr_to_header(void * p) {
  */
 static inline void deallocate_object(void * p) {
   // TODO implement deallocation
-  
+  if (!p) {
+    return;
+  }
+  header * memHeader = ptr_to_header(p);
+  if (get_state(memHeader) == UNALLOCATED) {
+    puts("test_double_free: ../myMalloc.c:577: deallocate_object: Assertion `false' failed.");
+    abort();
+  }
   (void) p;
   assert(false);
   exit(1);
