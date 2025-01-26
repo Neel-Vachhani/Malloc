@@ -772,3 +772,50 @@ M	tests/test_split
 M	tests/test_verify
 M	tests/test_very_large
 Your branch is up to date with 'origin/master'.
+[master 564863d] Commit
+ Committer: Neel Nikhil Vachhani <vachhann@data.cs.purdue.edu>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly:
+
+    git config --global user.name "Your Name"
+    git config --global user.email you@example.com
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 35 files changed, 52 insertions(+), 2 deletions(-)
+ rewrite tests/test_all_lists (74%)
+ rewrite tests/test_coalesce_chunk_coalesce (74%)
+ rewrite tests/test_coalesce_chunk_insert (74%)
+ rewrite tests/test_corrupted_canary (74%)
+ rewrite tests/test_double_free (73%)
+ rewrite tests/test_exact (74%)
+ rewrite tests/test_free_both (73%)
+ rewrite tests/test_free_even (71%)
+ rewrite tests/test_free_insert (74%)
+ rewrite tests/test_free_left (73%)
+ rewrite tests/test_free_null (76%)
+ rewrite tests/test_free_odd (71%)
+ rewrite tests/test_free_right (73%)
+ rewrite tests/test_insert_chunk (76%)
+ rewrite tests/test_large (73%)
+ rewrite tests/test_locks (74%)
+ rewrite tests/test_malloc_large (73%)
+ rewrite tests/test_malloc_too_large (71%)
+ rewrite tests/test_malloc_zero (74%)
+ rewrite tests/test_multi_malloc (74%)
+ rewrite tests/test_out_of_ram (74%)
+ rewrite tests/test_random (71%)
+ rewrite tests/test_simple0 (75%)
+ rewrite tests/test_simple1 (72%)
+ rewrite tests/test_simple2 (73%)
+ rewrite tests/test_simple3 (74%)
+ rewrite tests/test_simple4 (75%)
+ rewrite tests/test_simple5 (73%)
+ rewrite tests/test_simple6 (73%)
+ rewrite tests/test_split (74%)
+ rewrite tests/test_verify (74%)
+M	.local.git.out
+Your branch is up to date with 'origin/master'.
