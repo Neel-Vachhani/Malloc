@@ -67,7 +67,7 @@ static inline void deallocate_object(void * p);
 static inline header * allocate_object(size_t raw_size);
 
 //Helper function to allocate and properly add new OS chunk
-static inline header * allocate_os_chunk();
+static inline header * allocate_os_chunk(header * currentHeader);
 
 // Helper functions for verifying that the data structures are structurally 
 // valid
@@ -274,7 +274,7 @@ static inline header * allocate_object(size_t raw_size) {
         break;
       }*/
       while (1) {
-        memBlock = allocate_os_chunk();
+        memBlock = allocate_os_chunk(currentHeader);
 
         // If memBlock isn't big enough for the request, allocate_os_chunk is called repeatedly until it is big enough.
         if ((get_size(memBlock) - ALLOC_HEADER_SIZE) >= alloc_size) {
@@ -325,7 +325,7 @@ static inline header * allocate_object(size_t raw_size) {
   }
 }
 
-static inline header * allocate_os_chunk() {
+static inline header * allocate_os_chunk(header * currentHeader) {
   header * newBlock = allocate_chunk(ARENA_SIZE);
   newBlock->next = NULL;
   header * prevFencePost = get_header_from_offset(newBlock, -ALLOC_HEADER_SIZE);
