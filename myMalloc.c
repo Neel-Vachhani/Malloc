@@ -329,7 +329,6 @@ static inline header * allocate_os_chunk(header * currentHeader) {
   header * newBlock = allocate_chunk(ARENA_SIZE);
   newBlock->next = NULL;
   header * prevFencePost = get_header_from_offset(newBlock, -ALLOC_HEADER_SIZE);
-  insert_os_chunk(prevFencePost);
   // The newly allocated chunk is next to a previously allocated chunk
   if (get_header_from_offset(prevFencePost, -ALLOC_HEADER_SIZE) == lastFencePost) {
     // Converting old final fence post to header of newly allocated chunk and collaspe fenceposts
@@ -356,6 +355,8 @@ static inline header * allocate_os_chunk(header * currentHeader) {
       right_header->left_size = get_size(left_header);
       newBlock = left_header;
     }
+  } else {
+    insert_os_chunk(prevFencePost);
   }
 
   // Adding header back to appropriate free list if being moved due to size constraints.
