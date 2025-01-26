@@ -186,10 +186,184 @@ static header * allocate_chunk(size_t size) {
  * @return A block satisfying the user's request
  */
 static inline header * allocate_object(size_t raw_size) {
-  // TODO implement allocation
-  (void) raw_size;
-  assert(false);
-  exit(1);
+
+  size_t alloc_size = (raw_size <= 16) ? 16 : ((raw_size + 7) & (-8));
+  size_t freelist_index = (alloc_size / 8) - 1;
+  header * memBlock = NULL
+  // Finding best-fit memory block. Looping through all constant-sized free lists.
+  while (freelist_index < N_LISTS - 1) {
+    header * currentHeader = &freelistSentinels[freelist_index];
+    if (currentHeader->next == currentHeader) {
+      freelist_index++;
+      continue;
+    } else {
+      // If block is found, pointers are properly changed.
+      memBlock = currentHeader->next;
+      memBlock->next->prev = memBlock->prev;
+      memBlock->prev->next = memBlock->next;
+      memBlock->prev = NULL;
+      memBlock->next = NULL;
+      break;
+    }
+  }
+  // If no adequate block is found in constant-sized lists, final list is searched for fit.
+  if (!memBlock) {
+    header * currentHeader = &freelistSentinels[N_LISTS - 1];
+    header * currentNode = currentHeader->next;
+    while (currentNode != currentHeader) {
+      if ((get_size(currentNode) - ALLOC_HEADER_SIZE) >= alloc_size) {
+        memBlock = currentNode;
+        /*memBlock->next->prev = memBlock->prev;
+        memBlock->prev->next = memBlock->next;
+        memBlock->prev = NULL;
+        memBlock->next = NULL;*/
+        break;
+      }
+      currentNode = currentNode->next;
+    }
+
+    // If there are no available blocks anywhere, a new chunk must be requested and coalescing conditions are checked.
+    if (!memBlock) {
+      /*header * newBlock = allocate_chunk(ARENA_SIZE);
+      newBlock->next = NULL;
+      header * prevFencePost = get_header_from_offset(newBlock, -ALLOC_HEADER_SIZE);
+      insert_os_chunk(prevFencePost);
+      // The newly allocated chunk is next to a previously allocated chunk
+      if (get_header_from_offset(prevFencePost, -ALLOC_HEADER_SIZE) == lastFencePost) {
+        // Converting old final fence post to header of newly allocated chunk and collaspe fenceposts
+
+        set_state(lastFencePost, UNALLOCATED);
+        set_size(lastFencePost, get_size(newBlock) + (2 * ALLOC_HEADER_SIZE));
+        newBlock = lastFencePost;
+        lastFencePost = get_right_header(newBlock);
+        lastFencePost->left_size = get_size(newBlock);
+        newBlock->next = NULL;
+
+        // Check if left block is unallocated or not (for coalescing purposes)
+
+        header * left_header = get_left_header(newBlock);
+        if (get_state(left_header) == UNALLOCATED) {
+          if ((get_size(left_header) - ALLOC_HEADER_SIZE) <= ((N_LISTS - 1) * 8)) {
+            left_header->next->prev = left_header->prev;
+            left_header->prev->next = left_header->next;
+            left_header->prev = NULL;
+            left_header->next = NULL;
+          }
+          set_size(left_header, get_size(left_header) + get_size(newBlock));
+          header * right_header = get_right_header(left_header);
+          right_header->left_size = get_size(left_header);
+          newBlock = left_header;
+        }
+      }
+
+      // Adding header back to appropriate free list if being moved due to size constraints.
+      if (newBlock->next == NULL) {
+        newBlock->next = currentHeader->next;
+        newBlock->next->prev = newBlock;
+        newBlock->prev = currentHeader;
+        newBlock->prev->next = newBlock;
+      }
+
+      // Check if newly created allocation is big enough for requested size. If not, repeat OS allocation instructions.
+
+      if ((get_size(newBlock) - ALLOC_HEADER_SIZE) >= alloc_size) {
+        memBlock = newBlock;
+        break;
+      }*/
+      while (1) {
+        memBlock = allocate_os_chunk();
+
+        // If memBlock isn't big enough for the request, allocate_os_chunk is called repeatedly until it is big enough.
+        if ((get_size(memBlock) - ALLOC_HEADER_SIZE) >= alloc_size) {
+          break;
+        }
+      }
+    }
+  }
+
+  // memBlock found, determining if split is possible. If it is, then proper list rearrangement is done.
+  if ((get_size(memBlock) - ALLOC_HEADER_SIZE - alloc_size) >= 32) {
+    // Enough space to split block
+
+    header * newHeader = get_header_from_offset(memBlock, get_size(memBlock) - alloc_size - ALLOC_HEADER_SIZE);
+    set_state(newHeader, ALLOCATED);
+    set_size(newHeader, alloc_size + ALLOC_HEADER_SIZE);
+    newHeader->left_size = (get_size(memBlock) - alloc_size - ALLOC_HEADER_SIZE);
+    header * rightmostHeader = get_right_header(newHeader);
+    rightmostHeader->left_size = (alloc_size + ALLOC_HEADER_SIZE);
+    set_size(memBlock, newHeader->left_size);
+
+    // Checking if unallocated portion is in correct list. If not, it is moved to correct list.
+
+    if (get_size(memBlock) <= (N_LISTS - 1) * 8) {
+      memBlock->next->prev = memBlock->prev;
+      memBlock->prev->next = memBlock->next;
+      memBlock->prev = NULL;
+      memBlock->next = NULL;
+      size_t sentinel_index = (get_size(memBlock) - ALLOC_HEADER_SIZE - 1) / 8;
+      header * sentinel = &freelistSentinels[sentinel_index];
+      memBlock->prev = sentinel;
+      memBlock->next = sentinel->next;
+      memBlock->prev->next = memBlock;
+      memBlock->next->prev = memBlock;
+    }
+    return get_header_from_offset(newHeader, ALLOC_HEADER_SIZE);
+  } else {
+    // Not enough space to split block
+
+    if (memBlock->next != NULL) {
+      memBlock->next->prev = memBlock->prev;
+      memBlock->prev->next = memBlock->next;
+      memBlock->prev = NULL;
+      memBlock->next = NULL;
+    }
+    set_state(memBlock, ALLOCATED);
+    return get_header_from_offset(memBlock, ALLOC_HEADER_SIZE);
+  }
+}
+
+static inline header * allocate_os_chunk() {
+  header * newBlock = allocate_chunk(ARENA_SIZE);
+  newBlock->next = NULL;
+  header * prevFencePost = get_header_from_offset(newBlock, -ALLOC_HEADER_SIZE);
+  insert_os_chunk(prevFencePost);
+  // The newly allocated chunk is next to a previously allocated chunk
+  if (get_header_from_offset(prevFencePost, -ALLOC_HEADER_SIZE) == lastFencePost) {
+    // Converting old final fence post to header of newly allocated chunk and collaspe fenceposts
+
+    set_state(lastFencePost, UNALLOCATED);
+    set_size(lastFencePost, get_size(newBlock) + (2 * ALLOC_HEADER_SIZE));
+    newBlock = lastFencePost;
+    lastFencePost = get_right_header(newBlock);
+    lastFencePost->left_size = get_size(newBlock);
+    newBlock->next = NULL;
+
+    // Check if left block is unallocated or not (for coalescing purposes)
+
+    header * left_header = get_left_header(newBlock);
+    if (get_state(left_header) == UNALLOCATED) {
+      if ((get_size(left_header) - ALLOC_HEADER_SIZE) <= ((N_LISTS - 1) * 8)) {
+        left_header->next->prev = left_header->prev;
+        left_header->prev->next = left_header->next;
+        left_header->prev = NULL;
+        left_header->next = NULL;
+      }
+      set_size(left_header, get_size(left_header) + get_size(newBlock));
+      header * right_header = get_right_header(left_header);
+      right_header->left_size = get_size(left_header);
+      newBlock = left_header;
+    }
+  }
+
+  // Adding header back to appropriate free list if being moved due to size constraints.
+  if (newBlock->next == NULL) {
+    newBlock->next = currentHeader->next;
+    newBlock->next->prev = newBlock;
+    newBlock->prev = currentHeader;
+    newBlock->prev->next = newBlock;
+  }
+
+  return newBlock;
 }
 
 /**
@@ -217,9 +391,6 @@ static inline void deallocate_object(void * p) {
 
 /**
  * @brief Helper to detect cycles in the free list
- * https://en.wikipedia.org/wiki/Cycle_detection#Floyd's_Tortoise_and_Hare
- *
- * @return One of the nodes in the cycle or NULL if no cycle is present
  */
 static inline header * detect_cycles() {
   for (int i = 0; i < N_LISTS; i++) {
@@ -619,3 +790,7 @@ void tags_print(printFormatter pf) {
     fflush(stdout);
   }
 }
+#include <errno.h>
+#include <pthread.h>
+#include <stddef.h>
+#include <stdio.h>
