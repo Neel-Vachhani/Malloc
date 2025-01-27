@@ -432,7 +432,8 @@ static inline void deallocate_object(void * p) {
       memHeader->next->prev = memHeader->prev;
       memHeader->prev->next = memHeader->next;
     }
-    size_t sentinel_index = (get_size(memHeader) - ALLOC_HEADER_SIZE - 1) / 8;
+    size_t sentinel_index = ((get_size(memHeader) - ALLOC_HEADER_SIZE - 1) / 8) <= (N_LISTS - 1) ?
+                             ((get_size(memHeader) - ALLOC_HEADER_SIZE - 1) / 8) : (N_LISTS - 1);
     header * sentinel = &freelistSentinels[sentinel_index];
     memHeader->prev = sentinel;
     memHeader->next = sentinel->next;
