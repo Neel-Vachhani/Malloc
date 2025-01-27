@@ -421,6 +421,10 @@ static inline void deallocate_object(void * p) {
 
     // Updating rightmost header with left size
     (get_right_header(leftHeader))->left_size = get_size(leftHeader);
+    if (memHeader->next) {
+      memHeader->next->prev = memHeader->prev;
+      memHeader->prev->next = memHeader->next;
+    }
     memHeader = leftHeader;
   }
   if ((old_size - ALLOC_HEADER_SIZE) <= ((N_LISTS - 1) * 8)) {
