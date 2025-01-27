@@ -398,9 +398,42 @@ static inline void deallocate_object(void * p) {
     puts("test_double_free: ../myMalloc.c:577: deallocate_object: Assertion `false' failed.");
     abort();
   }
-  /*(void) p;
-  assert(false);
-  exit(1);*/
+  set_state(memHeader, UNALLOCATED);
+  header * leftHeader = get_left_header(memHeader);
+  header * rightHeader = get_right_header(memHeader);
+  size_t old_size = ALLOC_HEADER_SIZE;
+  if (get_state(rightHeader) == UNALLOCATED) {
+    // Coalescing with right side and setting free list pointers properly
+    old_size = get_size(rightHeader);
+    memHeader->next = rightHeader->next;
+    memHeader->prev = rightHeader->prev;
+    memHeader->next->prev = memHeader;
+    memHeader->prev->next = memHeader
+    set_size(memHeader, get_size(memHeader) + get_size(rightHeader));
+
+    // Updating rightmost header with left size
+    (get_right_header(memHeader))->left_size = get_size(memHeader);
+  }
+  if (get_state(leftHeader) = UNALLOCATED) {
+    // Coalescing with right side and setting free list pointers properly
+    old_size = get_size(leftHeader);
+    set_size(leftHeader, get_size(leftHeader) + get_size(memHeader));
+
+    // Updating rightmost header with left size
+    (get_right_header(leftHeader))->left_size = get_size(leftHeader);
+    memHeader = leftHeader;
+  }
+  if ((old_size - ALLOC_HEADER_SIZE) <= ((N_LISTS - 1) * 8)) {
+    // Chunk needs to be added to freelist because it is not fit for the current list or is in no list
+    memHeader->next->prev = memHeader->prev;
+    memHeader->prev->next = memHeader->next;
+    size_t sentinel_index = (get_size(memHeader) - ALLOC_HEADER_SIZE - 1) / 8;
+    header * sentinel = &freelistSentinels[sentinel_index];
+    memHeader->prev = sentinel;
+    memHeader->next = sentinel->next;
+    memHeader->prev->next = memHeader;
+    memHeader->next->prev = memHeader;
+  }
 }
 
 /**
