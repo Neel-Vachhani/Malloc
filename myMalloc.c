@@ -425,8 +425,10 @@ static inline void deallocate_object(void * p) {
   }
   if ((old_size - ALLOC_HEADER_SIZE) <= ((N_LISTS - 1) * 8)) {
     // Chunk needs to be added to freelist because it is not fit for the current list or is in no list
-    memHeader->next->prev = memHeader->prev;
-    memHeader->prev->next = memHeader->next;
+    if (memHeader->next) {
+      memHeader->next->prev = memHeader->prev;
+      memHeader->prev->next = memHeader->next;
+    }
     size_t sentinel_index = (get_size(memHeader) - ALLOC_HEADER_SIZE - 1) / 8;
     header * sentinel = &freelistSentinels[sentinel_index];
     memHeader->prev = sentinel;
