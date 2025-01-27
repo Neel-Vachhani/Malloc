@@ -189,7 +189,7 @@ static header * allocate_chunk(size_t size) {
  * @return A block satisfying the user's request
  */
 static inline header * allocate_object(size_t raw_size) {
-
+  if (!raw_size) { return NULL; }
   size_t alloc_size = (raw_size <= 16) ? 16 : ((raw_size + 7) & (-8));
   size_t freelist_index = (alloc_size / 8) - 1;
   header * memBlock = NULL;
