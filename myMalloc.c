@@ -395,7 +395,7 @@ static inline void deallocate_object(void * p) {
   }
   header * memHeader = ptr_to_header(p);
   if (get_state(memHeader) == UNALLOCATED) {
-    puts("test_double_free: ../myMalloc.c:577: deallocate_object: Assertion `false' failed.");
+    puts("Double Free Detected\ntest_double_free: ../myMalloc.c:577: deallocate_object: Assertion `false' failed.");
     abort();
   }
   set_state(memHeader, UNALLOCATED);
