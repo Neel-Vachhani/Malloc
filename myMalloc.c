@@ -215,10 +215,6 @@ static inline header * allocate_object(size_t raw_size) {
     while (currentNode != currentHeader) {
       if ((get_size(currentNode) - ALLOC_HEADER_SIZE) >= alloc_size) {
         memBlock = currentNode;
-        /*memBlock->next->prev = memBlock->prev;
-        memBlock->prev->next = memBlock->next;
-        memBlock->prev = NULL;
-        memBlock->next = NULL;*/
         break;
       }
       currentNode = currentNode->next;
@@ -226,52 +222,6 @@ static inline header * allocate_object(size_t raw_size) {
 
     // If there are no available blocks anywhere, a new chunk must be requested and coalescing conditions are checked.
     if (!memBlock) {
-      /*header * newBlock = allocate_chunk(ARENA_SIZE);
-      newBlock->next = NULL;
-      header * prevFencePost = get_header_from_offset(newBlock, -ALLOC_HEADER_SIZE);
-      insert_os_chunk(prevFencePost);
-      // The newly allocated chunk is next to a previously allocated chunk
-      if (get_header_from_offset(prevFencePost, -ALLOC_HEADER_SIZE) == lastFencePost) {
-        // Converting old final fence post to header of newly allocated chunk and collaspe fenceposts
-
-        set_state(lastFencePost, UNALLOCATED);
-        set_size(lastFencePost, get_size(newBlock) + (2 * ALLOC_HEADER_SIZE));
-        newBlock = lastFencePost;
-        lastFencePost = get_right_header(newBlock);
-        lastFencePost->left_size = get_size(newBlock);
-        newBlock->next = NULL;
-
-        // Check if left block is unallocated or not (for coalescing purposes)
-
-        header * left_header = get_left_header(newBlock);
-        if (get_state(left_header) == UNALLOCATED) {
-          if ((get_size(left_header) - ALLOC_HEADER_SIZE) <= ((N_LISTS - 1) * 8)) {
-            left_header->next->prev = left_header->prev;
-            left_header->prev->next = left_header->next;
-            left_header->prev = NULL;
-            left_header->next = NULL;
-          }
-          set_size(left_header, get_size(left_header) + get_size(newBlock));
-          header * right_header = get_right_header(left_header);
-          right_header->left_size = get_size(left_header);
-          newBlock = left_header;
-        }
-      }
-
-      // Adding header back to appropriate free list if being moved due to size constraints.
-      if (newBlock->next == NULL) {
-        newBlock->next = currentHeader->next;
-        newBlock->next->prev = newBlock;
-        newBlock->prev = currentHeader;
-        newBlock->prev->next = newBlock;
-      }
-
-      // Check if newly created allocation is big enough for requested size. If not, repeat OS allocation instructions.
-
-      if ((get_size(newBlock) - ALLOC_HEADER_SIZE) >= alloc_size) {
-        memBlock = newBlock;
-        break;
-      }*/
       while (1) {
         memBlock = allocate_os_chunk(currentHeader);
 
@@ -388,7 +338,6 @@ static inline header * ptr_to_header(void * p) {
  * @param p The pointer returned to the user by a call to malloc
  */
 static inline void deallocate_object(void * p) {
-  // TODO implement deallocation
   if (!p) {
     return;
   }
