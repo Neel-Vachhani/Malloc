@@ -408,13 +408,13 @@ static inline void deallocate_object(void * p) {
     memHeader->next = rightHeader->next;
     memHeader->prev = rightHeader->prev;
     memHeader->next->prev = memHeader;
-    memHeader->prev->next = memHeader
+    memHeader->prev->next = memHeader;
     set_size(memHeader, get_size(memHeader) + get_size(rightHeader));
 
     // Updating rightmost header with left size
     (get_right_header(memHeader))->left_size = get_size(memHeader);
   }
-  if (get_state(leftHeader) = UNALLOCATED) {
+  if (get_state(leftHeader) == UNALLOCATED) {
     // Coalescing with right side and setting free list pointers properly
     old_size = get_size(leftHeader);
     set_size(leftHeader, get_size(leftHeader) + get_size(memHeader));
