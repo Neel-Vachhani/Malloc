@@ -172,7 +172,6 @@ inline static void insert_fenceposts(void * raw_mem, size_t size) {
  */
 static header * allocate_chunk(size_t size) {
   void * mem = sbrk(size);
-  
   insert_fenceposts(mem, size);
   header * hdr = (header *) ((char *)mem + ALLOC_HEADER_SIZE);
   set_state(hdr, UNALLOCATED);
