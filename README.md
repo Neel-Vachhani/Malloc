@@ -12,7 +12,6 @@ This project implements a custom dynamic memory allocator that manages heap memo
 - **Threading**: POSIX Threads (pthread)
 - **System Calls**: `sbrk()` for heap expansion
 - **Build System**: Make
-- **Testing**: Python 3 test harness with shell scripting
 - **Debugging**: Valgrind-compatible implementation
 
 ## Features
